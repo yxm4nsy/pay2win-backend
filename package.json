@@ -1,0 +1,27 @@
+{
+  "name": "pay2win-backend",
+  "version": "0.0.1",
+  "description": "Loyalty Reward System",
+  "main": "index.js",
+  "scripts": {
+    "start": "node ./index.js",
+    "create-db": "npx prisma db push",
+    "seed": "node ./prisma/seed.js"
+  },
+  "author": "Yahya Sherif El Mansy",
+  "license": "MIT",
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "express-jwt": "^8.5.1",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
+    "sqlite3": "^5.1.7",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.19.0"
+  }
+}

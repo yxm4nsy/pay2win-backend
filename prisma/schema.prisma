@@ -1,0 +1,129 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum RoleType {
+  regular
+  cashier
+  manager
+  superuser
+}
+
+enum TransactionType {
+  purchase
+  redemption
+  adjustment
+  event
+  transfer
+}
+
+enum PromotionType {
+  automatic
+  onetime
+}
+
+model User {
+  id                    Int           @id @default(autoincrement())
+  utorid                String        @unique
+  name                  String
+  email                 String        @unique
+  birthday              DateTime?
+  password              String?
+  points                Int           @default(0)
+  role                  RoleType      @default(regular)
+  verified              Boolean       @default(false)
+  suspicious            Boolean       @default(false)
+  createdAt             DateTime      @default(now())
+  lastLogin             DateTime?
+  avatarUrl             String?
+  resetToken            String?
+  resetTokenExpiry      DateTime?
+  usedPromotions        Promotion[]        @relation("UsedPromotions")
+  transactionsOwned     Transaction[]      @relation("TransactionOwner")
+  transactionsCreated   Transaction[]      @relation("TransactionCreator")
+  transactionsProcessed Transaction[]      @relation("TransactionProcessor")
+  eventsOrganizing      EventOrganizer[]
+  eventsAttending       EventGuest[]
+}
+
+model Transaction {
+  id            Int             @id @default(autoincrement())
+  type          TransactionType
+  amount        Int
+  remark        String          @default("")
+  createdAt     DateTime        @default(now())
+  promotions    Promotion[]     @relation("TransactionPromotions")
+  ownerUserId   Int
+  ownerUser     User            @relation("TransactionOwner", fields: [ownerUserId], references: [id])
+  creatorUserId Int
+  creatorUser   User            @relation("TransactionCreator", fields: [creatorUserId], references: [id])
+  spent         Float?
+  suspicious    Boolean         @default(false)
+  redeemed      Int?
+  processorUserId Int?
+  processorUser   User?         @relation("TransactionProcessor", fields: [processorUserId], references: [id])
+  relatedTransactionId Int?
+  relatedTransaction   Transaction?  @relation("TransactionAdjustment", fields: [relatedTransactionId], references: [id])
+  adjustments          Transaction[] @relation("TransactionAdjustment")
+  relatedUserId Int?
+  eventId Int?
+  event   Event? @relation(fields: [eventId], references: [id])
+}
+
+model Promotion {
+  id            Int            @id @default(autoincrement())
+  name          String
+  description   String
+  type          PromotionType
+  startTime     DateTime
+  endTime       DateTime
+  minSpending   Float?
+  rate          Float?
+  points        Int?
+  usedBy        User[]         @relation("UsedPromotions")
+  transactions  Transaction[]  @relation("TransactionPromotions")
+}
+
+model Event {
+  id            Int       @id @default(autoincrement())
+  name          String
+  description   String
+  location      String
+  startTime     DateTime
+  endTime       DateTime
+  capacity      Int?
+  pointsTotal   Int
+  pointsAwarded Int       @default(0)
+  published     Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  organizers    EventOrganizer[]
+  guests        EventGuest[]
+  transactions  Transaction[]
+}
+
+model EventOrganizer {
+  id        Int      @id @default(autoincrement())
+  eventId   Int
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addedAt   DateTime @default(now())
+  
+  @@unique([eventId, userId])
+}
+
+model EventGuest {
+  id        Int      @id @default(autoincrement())
+  eventId   Int
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rsvpedAt  DateTime @default(now())
+  
+  @@unique([eventId, userId])
+}
